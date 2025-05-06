@@ -1,49 +1,70 @@
 {
   "version": 2,
-  "builds": [{ "src": "proxy.js", "use": "@vercel/node" }],
+  "builds": [
+    {
+      "src": "proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { 
-          "key": "Content-Security-Policy", 
-          "value": "frame-ancestors 'self' notion.so *.notion.so" 
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'self' notion.so *.notion.so"
         }
       ]
     }
   ],
   "routes": [
-    // 1. API routes first
-    { "src": "/api/(.*)", "dest": "/api/proxy.js" },
-    { "src": "/notion-embed", "dest": "/proxy.js" },
-
-    // 2. lekker.aglcodes.com → Tools
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/proxy.js"
+    },
+    {
+      "src": "/notion-embed",
+      "dest": "/proxy.js"
+    },
     {
       "src": "/(.*)",
       "dest": "/public/lekker/$1",
-      "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
+      "has": [
+        {
+          "type": "host",
+          "value": "lekker.aglcodes.com"
+        }
+      ]
     },
-
-    // 3. aglcodes.com → Redirect to www
     {
       "src": "/",
       "status": 308,
-      "headers": { "Location": "https://www.aglcodes.com" },
-      "has": [{ "type": "host", "value": "aglcodes.com" }]  // THIS WAS MISSING
+      "headers": {
+        "Location": "https://www.aglcodes.com"
+      },
+      "has": [
+        {
+          "type": "host",
+          "value": "aglcodes.com"
+        }
+      ]
     },
-
-    // 4. www.aglcodes.com → Personal site
     {
       "src": "/(.*)",
       "dest": "/public/personal/$1",
-      "has": [{ "type": "host", "value": "www.aglcodes.com" }]
+      "has": [
+        {
+          "type": "host",
+          "value": "www.aglcodes.com"
+        }
+      ]
     },
-
-    // 5. Optional deep link
     {
       "src": "/packing-list",
       "status": 301,
-      "headers": { "Location": "https://lekker.aglcodes.com/packing-list" }
+      "headers": {
+        "Location": "https://lekker.aglcodes.com/packing-list"
+      }
     }
   ]
 }
