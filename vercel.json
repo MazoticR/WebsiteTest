@@ -8,7 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/api/.*",
       "dest": "/api/proxy.js"
     },
     {
@@ -30,29 +30,23 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/public/lekker/$1",
+      "dest": "/public/lekker/index.html",
       "has": [
         {
           "type": "host",
           "value": "lekker.aglcodes.com"
         }
-      ],
-      "headers": {
-        "Content-Security-Policy": "frame-ancestors 'self' notion.so *.notion.so"
-      }
+      ]
     },
     {
       "src": "/(.*)",
-      "dest": "/public/personal/$1",
+      "dest": "/public/personal/index.html",
       "has": [
         {
           "type": "host",
           "value": "www.aglcodes.com"
         }
-      ],
-      "headers": {
-        "Content-Security-Policy": "frame-ancestors 'self' notion.so *.notion.so"
-      }
+      ]
     }
   ]
 }
