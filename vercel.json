@@ -1,8 +1,8 @@
 {
   "redirects": [
     {
-      "source": "http://aglcodes.com",
-      "destination": "https://aglcodes.com",
+      "source": "www.aglcodes.com",
+      "destination": "aglcodes.com",
       "permanent": true
     }
   ]
