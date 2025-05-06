@@ -1,5 +1,11 @@
 {
-
+  "redirects": [
+    {
+      "source": "http://aglcodes.com",
+      "destination": "https://aglcodes.com",
+      "permanent": true
+    }
+  ]
   
 "headers": [
     {
