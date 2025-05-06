@@ -12,9 +12,12 @@
       ]
     }
   ],
-
+  
+  "version": 2,
+  "builds": [{ "src": "proxy.js", "use": "@vercel/node" }],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/proxy.js" },
+    { "src": "/notion-embed", "dest": "/proxy.js" },
     { "src": "/tools/packing-list", "dest": "/public/tools/packing-list/index.html" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
