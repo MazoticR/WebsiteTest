@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "proxy.js",
+      "src": "api/proxy.js",
       "use": "@vercel/node"
     }
   ],
@@ -13,7 +13,7 @@
     },
     {
       "src": "/notion-embed",
-      "dest": "/proxy.js"
+      "dest": "/api/proxy.js"
     },
     {
       "src": "/",
