@@ -1,4 +1,22 @@
 {
+
+  
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "ALLOW-FROM https://www.notion.so"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors https://www.notion.so"
+        }
+      ]
+    }
+  ]
+
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/proxy.js" },
     { "src": "/tools/packing-list", "dest": "/public/tools/packing-list/index.html" },
