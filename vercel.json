@@ -24,7 +24,48 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/proxy.js" },
     { "src": "/notion-embed", "dest": "/proxy.js" },
-    { "src": "/tools/packing-list", "dest": "/public/tools/packing-list/index.html" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+
+    
+    // 2. Route lekker.aglcodes.com to /public/lekker
+    {
+      "src": "/(.*)",
+      "dest": "/public/lekker/$1",
+      "has": [
+        { 
+          "type": "host",
+          "value": "lekker.aglcodes.com" 
+        }
+      ]
+    },
+
+    // 3. Route www.aglcodes.com to /public/personal
+    {
+      "src": "/(.*)",
+      "dest": "/public/personal/$1",
+      "has": [
+        { 
+          "type": "host",
+          "value": "www.aglcodes.com" 
+        }
+      ]
+    },
+
+    // 4. Redirect root domain (aglcodes.com) to www
+    {
+      "src": "/",
+      "status": 308,
+      "headers": { 
+        "Location": "https://www.aglcodes.com" 
+      }
+    },
+
+    // 5. Fallback for direct tool access (optional)
+    {
+      "src": "/packing-list",
+      "status": 301,
+      "headers": {
+        "Location": "https://lekker.aglcodes.com/packing-list"
+      }
+    }
   ]
 }
