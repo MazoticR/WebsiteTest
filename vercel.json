@@ -5,9 +5,8 @@
       "destination": "aglcodes.com",
       "permanent": true
     }
-  ]
-  
-"headers": [
+  ],
+  "headers": [
     {
       "source": "/(.*)",
       "headers": [
@@ -18,15 +17,11 @@
       ]
     }
   ],
-  
   "version": 2,
   "builds": [{ "src": "proxy.js", "use": "@vercel/node" }],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/proxy.js" },
     { "src": "/notion-embed", "dest": "/proxy.js" },
-
-    
-    // 2. Route lekker.aglcodes.com to /public/lekker
     {
       "src": "/(.*)",
       "dest": "/public/lekker/$1",
@@ -37,8 +32,6 @@
         }
       ]
     },
-
-    // 3. Route www.aglcodes.com to /public/personal
     {
       "src": "/(.*)",
       "dest": "/public/personal/$1",
@@ -49,8 +42,6 @@
         }
       ]
     },
-
-    // 4. Redirect root domain (aglcodes.com) to www
     {
       "src": "/",
       "status": 308,
@@ -58,8 +49,6 @@
         "Location": "https://www.aglcodes.com" 
       }
     },
-
-    // 5. Fallback for direct tool access (optional)
     {
       "src": "/packing-list",
       "status": 301,
