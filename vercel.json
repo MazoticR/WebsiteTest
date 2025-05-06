@@ -6,17 +6,6 @@
       "use": "@vercel/node"
     }
   ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy", 
-          "value": "frame-ancestors 'self' notion.so *.notion.so"
-        }
-      ]
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
@@ -47,7 +36,10 @@
           "type": "host",
           "value": "lekker.aglcodes.com"
         }
-      ]
+      ],
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors 'self' notion.so *.notion.so"
+      }
     },
     {
       "src": "/(.*)",
@@ -57,7 +49,10 @@
           "type": "host",
           "value": "www.aglcodes.com"
         }
-      ]
+      ],
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors 'self' notion.so *.notion.so"
+      }
     }
   ]
 }
