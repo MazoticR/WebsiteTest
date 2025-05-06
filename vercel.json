@@ -1,25 +1,63 @@
-"routes": [
-
-  { "src": "/api/(.*)", "dest": "/api/proxy.js" },
-  { "src": "/notion-embed", "dest": "/proxy.js" },
-
-
-  {
-    "src": "/",
-    "status": 308,
-    "headers": { "Location": "https://www.aglcodes.com" },
-    "has": [{ "type": "host", "value": "aglcodes.com" }]
-  },
-
-
-  {
-    "src": "/(.*)",
-    "dest": "/public/lekker/$1",
-    "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
-  },
-  {
-    "src": "/(.*)",
-    "dest": "/public/personal/$1",
-    "has": [{ "type": "host", "value": "www.aglcodes.com" }]
-  }
-]
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy", 
+          "value": "frame-ancestors 'self' notion.so *.notion.so"
+        }
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/proxy.js"
+    },
+    {
+      "src": "/notion-embed",
+      "dest": "/proxy.js"
+    },
+    {
+      "src": "/",
+      "status": 308,
+      "headers": {
+        "Location": "https://www.aglcodes.com"
+      },
+      "has": [
+        {
+          "type": "host",
+          "value": "aglcodes.com"
+        }
+      ]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/lekker/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "lekker.aglcodes.com"
+        }
+      ]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/personal/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.aglcodes.com"
+        }
+      ]
+    }
+  ]
+}
