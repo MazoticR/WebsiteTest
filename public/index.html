@@ -1,18 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Tools Portal</title>
+  <title>Operations Tools</title>
   <style>
-    body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; }
-    .tool-card { border: 1px solid #ddd; padding: 20px; margin: 10px; border-radius: 8px; }
+    body { 
+      font-family: Arial; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px;
+    }
+    .tool-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    a {
+      color: #0066cc;
+      text-decoration: none;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h1>Welcome to the Tools Portal</h1>
+  <h1>Team Tools Portal</h1>
+  
   <div class="tool-card">
-    <h2>Packing List Generator</h2>
-    <p>Generate packing lists from Shipment IDs</p>
+    <h2>📦 Packing List Generator</h2>
+    <p>Create shipping documents from Shipment IDs</p>
     <a href="/tools/packing-list">Open Tool</a>
+  </div>
+
+  <!-- Future tools can be added like this -->
+  <div class="tool-card">
+    <h2>🛠️ Inventory Checker (Coming Soon)</h2>
+    <button disabled>Under Development</button>
   </div>
 </body>
 </html>
