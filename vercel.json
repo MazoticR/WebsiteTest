@@ -13,52 +13,37 @@
   "routes": [
 
     {
-      "src": "/lekker/tools/box-labels/css/(.*)",
-      "headers": { "Content-Type": "text/css" },
-      "dest": "/public/lekker/tools/box-labels/css/$1"
+      "src": "/api/(shipments|pick_tickets)(/.*)?",
+      "dest": "/api/proxy.js"
     },
-    {
-      "src": "/lekker/tools/box-labels/js/(.*)",
-      "headers": { "Content-Type": "application/javascript" },
-      "dest": "/public/lekker/tools/box-labels/js/$1"
-    },
-    {
-      "src": "/lekker/tools/box-labels(/?.*)",
-      "dest": "/public/lekker/tools/box-labels/index.html"
-    },
+    
 
     {
-      "src": "/lekker/tools/packing-list/css/(.*)",
-      "headers": { "Content-Type": "text/css" },
-      "dest": "/public/lekker/tools/packing-list/css/$1"
+      "src": "/lekker/tools/(box-labels|packing-list)/(css|js)/(.*)",
+      "headers": {
+        "Content-Type": "$2/css" ? "text/css" : "application/javascript"
+      },
+      "dest": "/public/lekker/tools/$1/$2/$3"
     },
-    {
-      "src": "/lekker/tools/packing-list/js/(.*)",
-      "headers": { "Content-Type": "application/javascript" },
-      "dest": "/public/lekker/tools/packing-list/js/$1"
-    },
-    {
-      "src": "/lekker/tools/packing-list(/?.*)",
-      "dest": "/public/lekker/tools/packing-list/index.html"
-    },
+    
 
     {
-      "src": "/lekker/tools/([^/]+)/?",
+      "src": "/lekker/tools/(box-labels|packing-list)(/.*)?",
       "dest": "/public/lekker/tools/$1/index.html"
     },
-    {
-      "src": "/lekker/?",
-      "dest": "/public/lekker/index.html"
-    },
+    
 
     {
-      "src": "/api/(shipments|pick_tickets)",
-      "dest": "/api/proxy.js"
+      "src": "/lekker(/.*)?",
+      "dest": "/public/lekker/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "lekker.aglcodes.com"
+        }
+      ]
     },
-    {
-      "src": "/api/(shipments|pick_tickets)/(.*)",
-      "dest": "/api/proxy.js"
-    },
+    
 
     {
       "src": "/",
@@ -70,6 +55,18 @@
         {
           "type": "host",
           "value": "aglcodes.com"
+        }
+      ]
+    },
+    
+
+    {
+      "src": "/(.*)",
+      "dest": "/public/personal/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.aglcodes.com"
         }
       ]
     }
