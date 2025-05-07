@@ -19,41 +19,46 @@
     
 
     {
-      "src": "/tools/box-labels",
+      "src": "/lekker/tools/box-labels",
       "dest": "/public/lekker/tools/box-labels/index.html",
       "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
     },
     {
-      "src": "/tools/box-labels/(.*)",
+      "src": "/lekker/tools/box-labels/(.*)",
       "dest": "/public/lekker/tools/box-labels/index.html",
       "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
     },
     
 
     {
-      "src": "/tools/packing-list",
+      "src": "/lekker/tools/packing-list",
       "dest": "/public/lekker/tools/packing-list/index.html",
       "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
     },
     {
-      "src": "/tools/packing-list/(.*)",
+      "src": "/lekker/tools/packing-list/(.*)",
       "dest": "/public/lekker/tools/packing-list/index.html",
       "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
     },
     
 
     {
-      "src": "/tools/(box-labels|packing-list)/css/(.*)",
+      "src": "/lekker/tools/(box-labels|packing-list)/css/(.*)",
       "headers": { "Content-Type": "text/css" },
       "dest": "/public/lekker/tools/$1/css/$2"
     },
     {
-      "src": "/tools/(box-labels|packing-list)/js/(.*)",
+      "src": "/lekker/tools/(box-labels|packing-list)/js/(.*)",
       "headers": { "Content-Type": "application/javascript" },
       "dest": "/public/lekker/tools/$1/js/$2"
     },
     
 
+    {
+      "src": "/lekker",
+      "dest": "/public/lekker/index.html",
+      "has": [{ "type": "host", "value": "lekker.aglcodes.com" }]
+    },
     {
       "src": "/",
       "dest": "/public/lekker/index.html",
