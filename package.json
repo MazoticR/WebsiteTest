@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "axios": "^1.9.0"
+  },
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "name": "my-tools-portal",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generador de packing lists</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script>
+    // Iniciador de jsPDF
+    window.jsPDF = window.jspdf.jsPDF;
+  </script>
+  <link rel="stylesheet" href="/lekker/tools/packing-list/css/styles.css"">
+</head>
+<body>
+  <h1>Generador de packing lists</h1>
+  <div>
+    <input type="text" id="shipmentId" placeholder="Enter Shipment ID" />
+    <button onclick="fetchShipment()">Generar packing list</button>
+  </div>
+  <div id="processing">Cargando informacion del shipment...</div>
+  <div id="error" class="error" style="display:none"></div>
+  <div class="export-buttons" id="exportButtons" style="display:none">
+    <button onclick="exportToPDF()" class="pdf">Exportar a PDF</button>
+    <button onclick="exportToExcel()">Exportar a Excel(csv)</button>
+  </div>
+  <div id="results"></div>
+
+  <script src="/lekker/tools/packing-list/js/main.js"></script>
+  <script src="/lekker/tools/packing-list/js/pdf-export.js"></script>
+  <script src="/lekker/tools/packing-list/js/excel-export.js"></script>
+</body>
+</html>

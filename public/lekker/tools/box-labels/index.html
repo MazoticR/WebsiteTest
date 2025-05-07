@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de etiquetas para cajas</title>
+  <link rel="icon" href="data:,">
+  
+  <!-- CSS con ruta absoluta -->
+  <link rel="stylesheet" href="/lekker/tools/box-labels/css/styles.css">
+
+  <style>
+    .label-pdf-container {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 86mm;
+      height: 54mm;
+    }
+    body { visibility: hidden; }
+    body.resources-loaded { visibility: visible; }
+  </style>
+</head>
+<body>
+  <!-- Tu contenido HTML permanece igual -->
+  <div class="no-print controls">
+    <h1>Generador de etiquetas para cajas</h1>
+    <div class="form-group">
+      <label for="company-select">Company:</label>
+      <select id="company-select" class="form-control">
+        <option value="secura">Secura Inc</option>
+        <option value="libertad">Libertad Inc</option>
+      </select>
+    </div>
+    <div>
+      <label for="shipmentId">Shipment ID:</label>
+      <input type="text" id="shipmentId" placeholder="Enter shipment ID">
+      <button id="generate-btn">Generar Etiquetas</button>
+      <button id="print-btn">Imprimir etiquetas</button>
+      <button id="pdf-btn">Exportar a PDF</button>
+    </div>
+    <div id="error"></div>
+    <div id="processing">Processing shipment data...</div>
+  </div>
+  
+  <div id="labels-container" class="label-sheet"></div>
+  <div id="pdf-container" class="label-pdf-container"></div>
+
+  <!-- Carga segura de dependencias -->
+  <script>
+    function loadScript(src, onload) {
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => {
+          if (onload) onload();
+          resolve();
+        };
+        script.onerror = () => {
+          console.error('Error loading script:', src);
+          resolve();
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    async function initializeApp() {
+      try {
+        // 1. Cargar dependencias externas primero
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        
+        // 2. Cargar main.js con ruta absoluta
+        await loadScript('/lekker/tools/box-labels/js/main.js', () => {
+          window.jsPDF = window.jspdf.jsPDF;
+        });
+
+        // 3. Configurar event listeners de manera segura
+        const shipmentInput = document.getElementById('shipmentId');
+        const generateBtn = document.getElementById('generate-btn');
+        const printBtn = document.getElementById('print-btn');
+        const pdfBtn = document.getElementById('pdf-btn');
+
+        if (shipmentInput) {
+          shipmentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && window.fetchShipment) {
+              fetchShipment();
+            }
+          });
+        }
+
+        if (generateBtn && window.fetchShipment) {
+          generateBtn.addEventListener('click', fetchShipment);
+        }
+
+        if (printBtn && window.printLabels) {
+          printBtn.addEventListener('click', printLabels);
+        }
+
+        if (pdfBtn && window.exportLabelsToPDF) {
+          pdfBtn.addEventListener('click', exportLabelsToPDF);
+        }
+
+        // Mostrar contenido
+        document.body.classList.add('resources-loaded');
+        
+      } catch (error) {
+        console.error('Initialization error:', error);
+      }
+    }
+
+    // Iniciar la aplicación cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+      initializeApp();
+    }
+  </script>
+</body>
+</html>

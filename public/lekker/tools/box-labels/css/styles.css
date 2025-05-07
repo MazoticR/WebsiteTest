@@ -1,0 +1,99 @@
+/* Contenedor principal de la etiqueta */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+.label {
+  width: 101.6mm;  /* 4 inches */
+  height: 152.4mm; /* 6 inches */
+  padding: 5mm;
+  box-sizing: border-box;
+  background: white;
+  border: 1px solid #ddd;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+}
+
+/* Sectiones con margen precisos */
+.label-header {
+  height: 25mm;
+  margin-bottom: 0;
+  font-size: 12pt;
+}
+
+.label-cartons {
+  height: 8mm;
+  font-weight: bold;
+  margin: 1mm 0;
+}
+
+.label-po {
+  height: 8mm;
+  font-weight: bold;
+  /*margin: 1mm 0 3mm 0;*/
+  margin: 0;
+}
+
+/* Para las lineas visibles horizontales */
+.label-divider {
+  height: 1px;
+  background-color: #000;
+  margin: 1mm 0;
+  width: 100%;
+}
+
+/* la informacion del producto */
+.label-style {
+  display: flex;
+  flex-direction: column;
+  margin: 2mm 0 0 0; /* Remove bottom margin */
+  padding: 0;
+  font-size: 10pt;
+}
+
+/* Elimina el estilo de grid anterior */
+.label-style div {
+  margin: 0;
+  padding: 1mm 0; /* se elimina el ancho de los bordes */
+  line-height: 1.2;
+  border-bottom: 0.5px solid #eee; /* divisor opcional */
+}
+
+.label-style div:last-child {
+  border-bottom: none; /* Quita el espacio extra del la ultima linea */
+  margin-bottom: 0; /* Asegura no espacios extra */
+}
+
+/* Shipping address */
+.label-ship-to {
+  margin: 1mm 0 0 0;  /* reduce el marge de arriba */
+  padding: 0;
+  font-size: 12pt;
+  line-height: 1.2;  /* Junta mas la informacion */
+}
+
+.label-ship-to div {
+  margin: 0.5mm 0;  /* Reduce aun mas el espacio entre las direcciones */
+}
+
+/* Footer */
+.label-footer {
+  margin: 1mm 0 0 0;  /* margen minimo arriba */
+  padding: 0;
+  font-size: 12pt;  /* tamaño normal */
+  text-align: right; /* Se alinea a la derecha */
+  height: auto;  /* Se elimina la altura promedio */
+  font-weight: bold;
+}
+
+/* Versión para PDF */
+.label-pdf {
+  width: 101.6mm;
+  height: 152.4mm;
+  padding: 5mm;
+  box-sizing: border-box;
+}
