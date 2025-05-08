@@ -16,37 +16,37 @@
       "src": "/api/(.*)",
       "dest": "/api/proxy.js"
     },
-    
+
 
     {
       "src": "/lekker/tools/([^/]+)/css/(.*)",
       "headers": { "Content-Type": "text/css" },
       "dest": "/public/lekker/tools/$1/css/$2"
     },
-    
+
+
     {
       "src": "/lekker/tools/([^/]+)/js/(.*)",
       "headers": { "Content-Type": "application/javascript" },
       "dest": "/public/lekker/tools/$1/js/$2"
     },
-    
+
 
     {
       "src": "/lekker/tools/purchase-orders",
       "dest": "/public/lekker/tools/purchase-orders/index.html"
     },
-
     {
       "src": "/lekker/tools/(box-labels|packing-list)",
       "dest": "/public/lekker/tools/$1/index.html"
     },
-    
+
 
     {
       "src": "/lekker",
       "dest": "/public/lekker/index.html"
     },
-    
+
 
     {
       "src": "/",
@@ -55,27 +55,6 @@
         {
           "type": "host",
           "value": "lekker\\.aglcodes\\.com"
-        }
-      ]
-    },
-    {
-      "src": "/",
-      "status": 308,
-      "headers": { "Location": "https://www.aglcodes.com" },
-      "has": [
-        {
-          "type": "host",
-          "value": "aglcodes\\.com"
-        }
-      ]
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/personal/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "www\\.aglcodes\\.com"
         }
       ]
     }
