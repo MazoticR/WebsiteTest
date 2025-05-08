@@ -7,10 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const EXCLUDED_VENDOR_IDS = [
         "91",  // SECURA
-        "26"  // CUTMETENDER
+        "26",  //CUT ME TENDER
+        '10', //LEKKER
+        '70'  // ELEGANT FASHION
       ];
     
-    // Cache for vendor names
+    // Cache para los nombres de vendors
     const vendorCache = {};
   
     fetchBtn.addEventListener('click', async () => {
@@ -20,22 +22,22 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         resultsDiv.innerHTML = '<p>Cargando...</p>';
         
-        // Fetch all purchase orders
+        // fetch all purchase orders
         const poResponse = await fetch(
           `/api/purchase_orders?token=6002f37a06cc09759259a7c5eabff471`
         );
         const poData = await poResponse.json();
         
-        // Filter POs by selected month/year
+        // Filtra por la fecha seleccionada
         const filteredOrders = filterOrdersByMonth(poData.response, year, month);
         
-        // Get unique vendor IDs from filtered orders
+        // Tomar los ID de los vendors del filtrado
         const vendorIds = [...new Set(filteredOrders.map(order => order.vendor_id))];
         
-        // Fetch vendor names in bulk
+        // tomar los nombres de vendor
         await fetchVendorNames(vendorIds);
         
-        // Display results
+        // mostrar resultados
         displayAsTable(filteredOrders);
         
       } catch (error) {
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (vendorIds.length === 0) return;
         
         try {
-          // Fetch all vendors (we'll filter client-side)
+          // tomar todos los vendors (se filtrara del lado del usuario)
           const response = await fetch(
             `/api/vendors?token=6002f37a06cc09759259a7c5eabff471`
           );
@@ -58,12 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const data = await response.json();
           
-          // Check if response structure is valid
+          // Revisar si la estructura de la respuesta es valida
           if (!data || !data.response || !Array.isArray(data.response)) {
             throw new Error("Invalid vendors API response structure");
           }
           
-          // Cache all vendors
+          // todos los vendors al cache
           data.response.forEach(vendor => {
             if (vendor.vendor_id && vendor.vendor_name) {
               vendorCache[vendor.vendor_id] = vendor.vendor_name;
@@ -72,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
           
         } catch (error) {
           console.error("Error fetching vendors:", error);
-          // You might want to show a user-friendly message
+          // mensaje amigable
           resultsDiv.innerHTML += `<p class="error-warning">Nota: No se pudieron cargar los nombres de los proveedores</p>`;
         }
       }
@@ -80,14 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
       function filterOrdersByMonth(orders, year, month) {
         if (!orders || !orders.length) return [];
         
-        // First filter by date
+        // primero filtra por fecha
         const dateFiltered = orders.filter(order => {
           if (!order.date) return false;
           const [orderMonth, orderDay, orderYear] = order.date.split('/');
           return orderYear === year && orderMonth === month;
         });
         
-        // Then filter out excluded vendors
+        // luego filtra a los vendors excluidos
         return dateFiltered.filter(order => 
           order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
         );
@@ -164,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     function formatDate(dateString) {
       if (!dateString) return '';
-      // API returns dates as "MM/DD/YYYY"
+      // formateo de la fecha, API regresa fecha asi "MM/DD/YYYY"
       const [month, day, year] = dateString.split('/');
       return `${day}/${month}/${year}`;
     }
@@ -183,10 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         const data = await response.json();
         
-        // Filter POs by selected month/year
+        // Filtra POs, por el fecha seleccionada
         const filteredOrders = filterOrdersByMonth(data.response, year, month);
         
-        // Create CSV content
+        // crea el archivo csv
         const headers = [
           'PO Number', 'Vendor ID', 'Vendor Name', 'Item', 
           'Material Description', 'Status', 'Department',
@@ -209,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const csvContent = [headers, ...rows].join('\n');
         
-        // Create download link
+        // link para descargar
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
