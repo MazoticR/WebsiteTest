@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         const data = await response.json();
         
+        console.log("API Response:", data); // Debugging
+        
         // Display results in table format
         displayAsTable(data.response);
         
@@ -38,31 +40,25 @@ document.addEventListener('DOMContentLoaded', () => {
               <tr>
                 <th>PO Number</th>
                 <th>Vendor ID</th>
-                <th>Vendor Name</th>
-                <th>Item</th>
-                <th>Material Description</th>
+                <th>Date</th>
+                <th>Due Date</th>
                 <th>Status</th>
-                <th>Department</th>
-                <th>PO Date</th>
-                <th>Cancel Date</th>
-                <th>Total Units</th>
-                <th>PO Total</th>
+                <th>Qty</th>
+                <th>Amount</th>
+                <th>Items Count</th>
               </tr>
             </thead>
             <tbody>
               ${orders.map(order => `
                 <tr>
-                  <td>${order.PurchaseOrderNumber || ''}</td>
-                  <td>${order.vendor || ''}</td>
-                  <td>${order.VendorName || ''}</td>
-                  <td>${order.Item || ''}</td>
-                  <td>${order.MaterialDescription || ''}</td>
-                  <td>${order.PurchaseOrderStatus || ''}</td>
-                  <td>${order.Department || ''}</td>
-                  <td>${formatDate(order.PurchaseOrderDate)}</td>
-                  <td>${formatDate(order.PurchaseOrdercancelDate)}</td>
-                  <td class="numeric">${order.Totalunits || 0}</td>
-                  <td class="numeric">${formatCurrency(order.PurchaseOrderTotal)}</td>
+                  <td>${order.purchase_order_id || ''}</td>
+                  <td>${order.vendor_id || ''}</td>
+                  <td>${formatDate(order.date)}</td>
+                  <td>${formatDate(order.date_due)}</td>
+                  <td>${getStatus(order)}</td>
+                  <td class="numeric">${order.qty || 0}</td>
+                  <td class="numeric">${formatCurrency(order.amount)}</td>
+                  <td class="numeric">${order.purchase_order_items ? order.purchase_order_items.length : 0}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -73,10 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
       resultsDiv.innerHTML = tableHTML;
     }
   
+    function getStatus(order) {
+      if (order.qty_open === "0.00") return "Completed";
+      if (order.qty_cxl && order.qty_cxl !== "0.00") return "Cancelled";
+      if (order.qty_received && order.qty_received !== "0.00") return "Partially Received";
+      return "Open";
+    }
+  
     function formatDate(dateString) {
       if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
+      // The API returns dates in format "MM/DD/YYYY"
+      const [month, day, year] = dateString.split('/');
+      return `${day}/${month}/${year}`;
     }
   
     function formatCurrency(amount) {
@@ -95,23 +99,19 @@ document.addEventListener('DOMContentLoaded', () => {
           
           // Create CSV content
           const headers = [
-            'PO Number', 'Vendor ID', 'Vendor Name', 'Item', 
-            'Material Description', 'Status', 'Department',
-            'PO Date', 'Cancel Date', 'Total Units', 'PO Total'
+            'PO Number', 'Vendor ID', 'Date', 'Due Date', 
+            'Status', 'Qty', 'Amount', 'Items Count'
           ].join(',');
           
           const rows = data.response.map(order => [
-            order.PurchaseOrderNumber || '',
-            order.vendor || '',
-            order.VendorName || '',
-            order.Item || '',
-            order.MaterialDescription || '',
-            order.PurchaseOrderStatus || '',
-            order.Department || '',
-            formatDate(order.PurchaseOrderDate),
-            formatDate(order.PurchaseOrdercancelDate),
-            order.Totalunits || 0,
-            order.PurchaseOrderTotal || 0
+            order.purchase_order_id || '',
+            order.vendor_id || '',
+            formatDate(order.date),
+            formatDate(order.date_due),
+            getStatus(order),
+            order.qty || 0,
+            order.amount || 0,
+            order.purchase_order_items ? order.purchase_order_items.length : 0
           ].join(','));
           
           const csvContent = [headers, ...rows].join('\n');
