@@ -1,0 +1,81 @@
+/* Basic reset and fonts */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .controls {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  
+  select, button {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  }
+  
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
+  
+  /* Table styles */
+  .table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .po-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  
+  .po-table th {
+    background-color: #f5f5f5;
+    text-align: left;
+    padding: 12px 15px;
+    position: sticky;
+    top: 0;
+  }
+  
+  .po-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .po-table tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .numeric {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+  
+  .error {
+    color: #d9534f;
+    padding: 10px;
+    background-color: #f2dede;
+    border-radius: 4px;
+  }

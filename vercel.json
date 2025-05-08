@@ -28,6 +28,21 @@
     
 
     {
+      "src": "/lekker/tools/purchase-orders/css/(.*)",
+      "headers": { "Content-Type": "text/css" },
+      "dest": "/public/lekker/tools/purchase-orders/css/$1"
+    },
+    {
+      "src": "/lekker/tools/purchase-orders/js/(.*)",
+      "headers": { "Content-Type": "application/javascript" },
+      "dest": "/public/lekker/tools/purchase-orders/js/$1"
+    },
+    {
+      "src": "/lekker/tools/purchase-orders",
+      "dest": "/public/lekker/tools/purchase-orders/index.html"
+    },
+
+    {
       "src": "/lekker/tools/box-labels/css/(.*)",
       "headers": { "Content-Type": "text/css" },
       "dest": "/public/lekker/tools/box-labels/css/$1"

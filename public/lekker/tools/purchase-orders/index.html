@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POs por mes</title>
+  <link rel="stylesheet" href="/lekker/tools/purchase-orders/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>POs por mes</h1>
+    
+    <div class="controls">
+      <select id="year-select">
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+      </select>
+      
+      <select id="month-select">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <!-- ... all months ... -->
+        <option value="12">December</option>
+      </select>
+      
+      <button id="fetch-btn">Generar Reporte</button>
+      <button id="export-btn">Exportar a Excel</button>
+    </div>
+    
+    <div id="results"></div>
+  </div>
+
+  <script src="/lekker/tools/purchase-orders/js/main.js"></script>
+</body>
+</html>
