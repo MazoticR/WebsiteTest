@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   
       const tableHTML = `
-        <h2>Purchase Orders for ${monthSelect.value}/${yearSelect.value}</h2>
+        <h2>Ordenes de ${monthSelect.value}/${yearSelect.value}</h2>
         <div class="table-container">
           <table class="po-table">
             <thead>
