@@ -21,7 +21,8 @@ module.exports = async (req, res) => {
     const baseUrls = {
       shipments: 'https://secura.app.apparelmagic.com/api/shipments',
       pick_tickets: 'https://secura.app.apparelmagic.com/api/pick_tickets',
-      purchase_orders: 'https://secura.app.apparelmagic.com/api/purchase_orders'
+      purchase_orders: 'https://secura.app.apparelmagic.com/api/purchase_orders',
+      vendors: 'https://secura.app.apparelmagic.com/api/vendors'
     };
 
     // Dynamic endpoint handling

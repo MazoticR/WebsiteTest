@@ -39,24 +39,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
     async function fetchVendorNames(vendorIds) {
-      if (vendorIds.length === 0) return;
-      
-      try {
-        const response = await fetch(
-          `/api/vendors?token=6002f37a06cc09759259a7c5eabff471`
-        );
-        const data = await response.json();
+        if (vendorIds.length === 0) return;
         
-        // Cache all vendors
-        data.response.forEach(vendor => {
-          vendorCache[vendor.vendor_id] = vendor.vendor_name;
-        });
-        
-      } catch (error) {
-        console.error("Error fetching vendors:", error);
-        // Continue with empty cache
+        try {
+          // Fetch all vendors (we'll filter client-side)
+          const response = await fetch(
+            `/api/vendors?token=6002f37a06cc09759259a7c5eabff471`
+          );
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          // Check if response structure is valid
+          if (!data || !data.response || !Array.isArray(data.response)) {
+            throw new Error("Invalid vendors API response structure");
+          }
+          
+          // Cache all vendors
+          data.response.forEach(vendor => {
+            if (vendor.vendor_id && vendor.vendor_name) {
+              vendorCache[vendor.vendor_id] = vendor.vendor_name;
+            }
+          });
+          
+        } catch (error) {
+          console.error("Error fetching vendors:", error);
+          // You might want to show a user-friendly message
+          resultsDiv.innerHTML += `<p class="error-warning">Nota: No se pudieron cargar los nombres de los proveedores</p>`;
+        }
       }
-    }
   
     function filterOrdersByMonth(orders, year, month) {
       if (!orders || !orders.length) return [];
