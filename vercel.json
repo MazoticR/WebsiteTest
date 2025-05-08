@@ -19,9 +19,15 @@
     
 
     {
-      "src": "/lekker/tools/([^/]+)/(css|js)/(.*)",
-      "headers": { "Content-Type": "$2/text/css" },
-      "dest": "/public/lekker/tools/$1/$2/$3"
+      "src": "/lekker/tools/([^/]+)/css/(.*)",
+      "headers": { "Content-Type": "text/css" },
+      "dest": "/public/lekker/tools/$1/css/$2"
+    },
+    
+    {
+      "src": "/lekker/tools/([^/]+)/js/(.*)",
+      "headers": { "Content-Type": "application/javascript" },
+      "dest": "/public/lekker/tools/$1/js/$2"
     },
     
 
@@ -29,7 +35,7 @@
       "src": "/lekker/tools/purchase-orders",
       "dest": "/public/lekker/tools/purchase-orders/index.html"
     },
-    
+
     {
       "src": "/lekker/tools/(box-labels|packing-list)",
       "dest": "/public/lekker/tools/$1/index.html"
