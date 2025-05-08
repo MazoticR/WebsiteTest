@@ -4,6 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearSelect = document.getElementById('year-select');
     const monthSelect = document.getElementById('month-select');
     const resultsDiv = document.getElementById('results');
+
+    const EXCLUDED_VENDOR_IDS = [
+        "91",  // SECURA
+        "26"  // CUTMETENDER
+      ];
     
     // Cache for vendor names
     const vendorCache = {};
@@ -72,18 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
   
-    function filterOrdersByMonth(orders, year, month) {
-      if (!orders || !orders.length) return [];
-      
-      return orders.filter(order => {
-        if (!order.date) return false;
+      function filterOrdersByMonth(orders, year, month) {
+        if (!orders || !orders.length) return [];
         
-        // API returns date as "MM/DD/YYYY"
-        const [orderMonth, orderDay, orderYear] = order.date.split('/');
+        // First filter by date
+        const dateFiltered = orders.filter(order => {
+          if (!order.date) return false;
+          const [orderMonth, orderDay, orderYear] = order.date.split('/');
+          return orderYear === year && orderMonth === month;
+        });
         
-        return orderYear === year && orderMonth === month;
-      });
-    }
+        // Then filter out excluded vendors
+        return dateFiltered.filter(order => 
+          order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
+        );
+      }
   
     function displayAsTable(orders) {
       if (!orders || orders.length === 0) {
