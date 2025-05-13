@@ -203,7 +203,8 @@ async function exportLabelsToPDF() {
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
+      compress: true
     });
 
     const labelWidth = 101.6;
@@ -212,7 +213,9 @@ async function exportLabelsToPDF() {
     const posY = 10;
 
     const options = {
-      scale: 3,
+      scale: 2,
+      dpi: 150,
+      quality:0.8,
       logging: true,
       useCORS: true,
       backgroundColor: null,
