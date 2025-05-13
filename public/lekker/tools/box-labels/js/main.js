@@ -203,7 +203,8 @@ async function exportLabelsToPDF() {
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
+      compress: true
     });
 
     const labelWidth = 101.6;
@@ -269,7 +270,7 @@ async function exportLabelsToPDF() {
 
       await new Promise(resolve => {
         html2canvas(clone, options).then(canvas => {
-          const imgData = canvas.toDataURL('image/png');
+          const imgData = canvas.toDataURL('image/jpeg', 0.85);
           // Añadir imagen en posición X,Y con tamaño de etiqueta
           pdf.addImage(imgData, 'PNG', posX, posY, labelWidth, labelHeight);
           pdfContainer.removeChild(clone);
