@@ -270,7 +270,7 @@ async function exportLabelsToPDF() {
 
       await new Promise(resolve => {
         html2canvas(clone, options).then(canvas => {
-          const imgData = canvas.toDataURL('image/jpeg', 0.85);
+          const imgData = canvas.toDataURL('image/png');
           // Añadir imagen en posición X,Y con tamaño de etiqueta
           pdf.addImage(imgData, 'PNG', posX, posY, labelWidth, labelHeight);
           pdfContainer.removeChild(clone);
