@@ -212,7 +212,9 @@ async function exportLabelsToPDF() {
     const posY = 10;
 
     const options = {
-      scale: 3,
+      scale: 2,
+      dpi: 150,
+      quality:0.8,
       logging: true,
       useCORS: true,
       backgroundColor: null,
