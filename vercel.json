@@ -30,7 +30,11 @@
       "headers": { "Content-Type": "application/javascript" },
       "dest": "/public/lekker/tools/$1/js/$2"
     },
-
+    
+    {
+      "src": "/lekker/tools/efficiency-calculator",
+      "dest": "/public/lekker/tools/efficiency-calculator/index.html"
+    },
 
     {
       "src": "/lekker/tools/purchase-orders",
