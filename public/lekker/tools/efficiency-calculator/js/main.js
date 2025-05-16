@@ -136,17 +136,17 @@ function findWorkerSections(data) {
         
         if (!currentWorker) continue;
         
-        // Look for the operations header (starts with "Operacion" in first cell)
-        if (row[0] === 'Operacion') {
+        // Look for operations header
+        if (row[0] === 'Operacion' && row[1] === 'Estilo') {
             currentWorker.operationsHeaderRow = i;
             continue;
         }
         
-        // Look for worked hours row (empty first cell, "Horas trabajadas" in second cell)
-        if (row[0] === '' && row[1] === 'Horas trabajadas') {
+        // Look for worked hours row (specific to your file structure)
+        if (Array.isArray(row) && row[0] === '' && row[1] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-            currentWorker.idleTimeRow = i + 1; // Next row is idle time
-            currentWorker.efficiencyRow = i + 2; // Then efficiency
+            currentWorker.idleTimeRow = i + 1;
+            currentWorker.efficiencyRow = i + 2;
             continue;
         }
     }
@@ -154,7 +154,7 @@ function findWorkerSections(data) {
     if (currentWorker) workers.push(currentWorker);
     return workers;
 }
-    
+
 function calculateEfficiencies() {
     const idleTimeInputs = document.querySelectorAll('.idle-time');
     const idleTimes = {};
@@ -184,33 +184,32 @@ function calculateEfficiencies() {
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
         // Debug: Show what we found for this worker
-        console.log(`Worker ${worker.id} rows:`, {
+        console.log(`Worker ${worker.id} section:`, {
             operationsHeader: jsonData[worker.operationsHeaderRow],
             workedHours: jsonData[worker.workedHoursRow],
             idleTime: jsonData[worker.idleTimeRow],
             efficiency: jsonData[worker.efficiencyRow]
         });
 
-        // Verify we have all required rows
-        if (worker.workedHoursRow === undefined || worker.idleTimeRow === undefined) {
-            console.warn(`Skipping worker ${worker.id} - missing required rows`);
-            return;
-        }
-
-        // Ensure the idle time row exists and is properly formatted
-        if (!jsonData[worker.idleTimeRow]) {
-            jsonData[worker.idleTimeRow] = [];
-        }
-        jsonData[worker.idleTimeRow][0] = '';
-        jsonData[worker.idleTimeRow][1] = 'Horas tiempo inactivo';
-
-        // Update idle times
-        Object.entries(dayColumns).forEach(([day, col]) => {
-            if (idleTimes[worker.id]?.[day]) {
-                jsonData[worker.idleTimeRow][col] = idleTimes[worker.id][day];
-                console.log(`Updated ${worker.id} ${day} idle time to ${idleTimes[worker.id][day]}`);
+        // Only proceed if we found all required rows
+        if (worker.workedHoursRow && worker.idleTimeRow) {
+            // Ensure the idle time row exists and is properly formatted
+            if (!jsonData[worker.idleTimeRow]) {
+                jsonData[worker.idleTimeRow] = Array(15).fill('');
             }
-        });
+            jsonData[worker.idleTimeRow][0] = '';
+            jsonData[worker.idleTimeRow][1] = 'Horas tiempo inactivo';
+
+            // Update idle times
+            Object.entries(dayColumns).forEach(([day, col]) => {
+                if (idleTimes[worker.id]?.[day]) {
+                    jsonData[worker.idleTimeRow][col] = idleTimes[worker.id][day];
+                    console.log(`Updated ${worker.id} ${day} idle time to ${idleTimes[worker.id][day]}`);
+                }
+            });
+        } else {
+            console.warn(`Skipping worker ${worker.id} - missing required rows`);
+        }
     });
 
     showStatus('¡Datos actualizados correctamente!', 'success');
