@@ -16,6 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadBtn.addEventListener('click', handleFileUpload);
     calculateBtn.addEventListener('click', calculateEfficiencies);
     downloadBtn.addEventListener('click', downloadModifiedFile);
+
+    function isCurrentDay(dayAbbr) {
+    const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+    const today = new Date().getDay(); // 0=Sunday
+    return dayAbbr === days[today];
+}
     
     function handleFileUpload() {
         const file = excelFileInput.files[0];
@@ -51,49 +57,61 @@ document.addEventListener('DOMContentLoaded', () => {
 function displayWorkerControls() {
     workerControls.innerHTML = '';
     
-    // Find all worker sections
     const workerSections = findWorkerSections(jsonData);
+    const days = detectDays(jsonData); // Make sure you have this helper function
     
-    // Find day columns (Lun, Mar, Mie, etc.)
-    const days = [];
-    const headerRow = jsonData.find(row => row && row[0] === 'Operacion');
-    if (headerRow) {
-        for (let i = 0; i < headerRow.length; i++) {
-            if (['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].includes(headerRow[i])) {
-                days.push({
-                    name: headerRow[i],
-                    index: i
-                });
-            }
-        }
-    }
-
     workerSections.forEach(section => {
         const workerDiv = document.createElement('div');
         workerDiv.className = 'worker-section';
         
-        const workerName = section.name;
-        const workerId = section.id;
-        
         workerDiv.innerHTML = `
-            <h3>${workerId} / ${workerName}</h3>
-            <div class="idle-time-controls">
-                ${days.map(day => `
-                    <div class="idle-time-input">
-                        <label>${day.name}:</label>
-                        <input type="text" 
-                               class="idle-time" 
-                               data-worker="${workerId}" 
-                               data-day="${day.name}" 
-                               placeholder="HH:MM" 
-                               pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$">
+            <h3>${section.id} / ${section.name}</h3>
+                <div class="idle-time-header">
+                    <span class="label">Tiempo Inactivo:</span>
+                    <div class="idle-time-controls-container">
+                        <button class="scroll-left">&lt;</button>
+                        <div class="idle-time-controls">
+                            ${days.map(day => `<div class="idle-time-input ${isCurrentDay(day.name) ? 'current-day' : ''}">
+                                <label>${day.name}</label>
+                                <input type="text" 
+                                    class="idle-time" 
+                                    data-worker="${section.id}" 
+                                    data-day="${day.name}" 
+                                    placeholder="0:00" 
+                                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$">
+                                </div>`).join('')}
+                        </div>
+                        <button class="scroll-right">&gt;</button>
                     </div>
-                `).join('')}
-            </div>
-        `;
+                </div>`
         
         workerControls.appendChild(workerDiv);
     });
+
+    document.querySelectorAll('.idle-time').forEach(input => {
+    input.addEventListener('blur', (e) => {
+        if (!e.target.validity.valid) {
+            e.target.classList.add('invalid');
+            showStatus('Formato incorrecto. Use HH:MM (ej. 1:30)', 'error');
+        } else {
+            e.target.classList.remove('invalid');
+        }
+    });
+});
+}
+
+// Helper function to detect days
+function detectDays(data) {
+    const days = [];
+    const headerRow = data.find(row => row && row[0] === 'Operacion');
+    if (headerRow) {
+        headerRow.forEach((cell, index) => {
+            if (['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].includes(cell)) {
+                days.push({ name: cell, index });
+            }
+        });
+    }
+    return days;
 }
     
     function findWorkerSections(data) {
@@ -135,95 +153,82 @@ function displayWorkerControls() {
         return workers;
     }
     
-    function calculateEfficiencies() {
-        const idleTimeInputs = document.querySelectorAll('.idle-time');
-        const idleTimes = {};
+function calculateEfficiencies() {
+    const idleTimeInputs = document.querySelectorAll('.idle-time');
+    const idleTimes = {};
+    
+    // 1. Collect all idle times from inputs
+    idleTimeInputs.forEach(input => {
+        const workerId = input.dataset.worker;
+        const day = input.dataset.day;
+        const value = input.value.trim();
         
-        // Collect all idle times
-        idleTimeInputs.forEach(input => {
-            const workerId = input.dataset.worker;
-            const day = input.dataset.day;
-            const value = input.value.trim();
-            
-            if (!idleTimes[workerId]) {
-                idleTimes[workerId] = {};
-            }
-            
-            idleTimes[workerId][day] = value;
-        });
-        
-        // Find day columns
-        const days = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
-        const dayColumns = {};
-        days.forEach(day => {
-            const index = jsonData[3].indexOf(day); // Find day column index
-            if (index !== -1) {
-                dayColumns[day] = index;
+        if (!idleTimes[workerId]) idleTimes[workerId] = {};
+        idleTimes[workerId][day] = value || '0:00'; // Default to 0:00 if empty
+    });
+
+    // 2. Find day columns
+    const headerRow = jsonData.find(row => row && row[0] === 'Operacion');
+    const dayColumns = {};
+    if (headerRow) {
+        headerRow.forEach((cell, index) => {
+            if (['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].includes(cell)) {
+                dayColumns[cell] = index;
             }
         });
+    }
+
+    // 3. Process each worker section
+    const workerSections = findWorkerSections(jsonData);
+    workerSections.forEach(worker => {
+        // Find the "Horas tiempo inactivo" row
+        const idleTimeRow = jsonData[worker.workedHoursRow + 1];
         
-        // Process each worker
-        const workerSections = findWorkerSections(jsonData);
-        
-        workerSections.forEach(worker => {
-            // Get operations rows
-            const operations = [];
+        // Update idle times and calculate efficiencies for each day
+        Object.entries(dayColumns).forEach(([day, col]) => {
+            // Update idle time in the worksheet data
+            if (idleTimeRow && idleTimes[worker.id]?.[day]) {
+                idleTimeRow[col] = idleTimes[worker.id][day];
+            }
+
+            // Calculate real worked time (worked hours - idle time)
+            const workedHoursStr = jsonData[worker.workedHoursRow]?.[col] || '0:00';
+            const idleHoursStr = idleTimes[worker.id]?.[day] || '0:00';
+            
+            const workedMinutes = timeToMinutes(workedHoursStr);
+            const idleMinutes = timeToMinutes(idleHoursStr);
+            const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
+
+            // Calculate efficiency for each operation
+            let totalEfficiency = 0;
+            let operationCount = 0;
+            
+            // Get all operation rows for this worker
             for (let i = worker.operationsHeaderRow + 1; i < worker.workedHoursRow; i++) {
-                if (jsonData[i] && jsonData[i][0] && jsonData[i][0] !== '') {
-                    operations.push(jsonData[i]);
-                }
-            }
-            
-            // Process each day
-            Object.entries(dayColumns).forEach(([day, col]) => {
-                // Skip if no data for this day
-                if (!jsonData[worker.workedHoursRow] || !jsonData[worker.workedHoursRow][col]) {
-                    return;
-                }
-                
-                // Get worked hours and idle time
-                let workedHoursStr = jsonData[worker.workedHoursRow][col];
-                let idleTimeStr = idleTimes[worker.id]?.[day] || '0:00';
-                
-                // Convert to minutes
-                const workedMinutes = timeToMinutes(workedHoursStr);
-                const idleMinutes = timeToMinutes(idleTimeStr);
-                
-                // Calculate real worked time (worked - idle)
-                const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
-                
-                // Update idle time in the data
-                if (jsonData[worker.idleTimeRow]) {
-                    jsonData[worker.idleTimeRow][col] = minutesToTime(idleMinutes);
-                }
-                
-                // Calculate efficiency
-                let totalEfficiency = 0;
-                let operationCount = 0;
-                
-                operations.forEach(op => {
-                    const produced = op[col] || 0;
-                    const target = op[3] || 1; // Meta is in column D (index 3)
+                const row = jsonData[i];
+                if (row && row[0] && row[0] !== '') { // Valid operation row
+                    const produced = Number(row[col]) || 0;
+                    const target = Number(row[3]) || 1; // Column D (index 3) is "Meta"
                     
                     if (target > 0 && realWorkedMinutes > 0) {
                         const operationEfficiency = (produced / target) * 100;
                         totalEfficiency += operationEfficiency;
                         operationCount++;
                     }
-                });
-                
-                const avgEfficiency = operationCount > 0 ? (totalEfficiency / operationCount) : 0;
-                
-                // Update efficiency in the data
-                if (jsonData[worker.efficiencyRow]) {
-                    jsonData[worker.efficiencyRow][col] = avgEfficiency;
                 }
-            });
+            }
+
+            // Update efficiency in the worksheet
+            const avgEfficiency = operationCount > 0 ? (totalEfficiency / operationCount) : 0;
+            if (jsonData[worker.efficiencyRow]) {
+                jsonData[worker.efficiencyRow][col] = avgEfficiency.toFixed(2);
+            }
         });
-        
-        showStatus('Efficiencies recalculated successfully!', 'success');
-        downloadBtn.classList.remove('hidden');
-    }
+    });
+
+    showStatus('Efficiencies recalculated successfully!', 'success');
+    downloadBtn.classList.remove('hidden');
+}
     
     function timeToMinutes(timeStr) {
         if (!timeStr) return 0;
@@ -275,5 +280,19 @@ function displayWorkerControls() {
     function showStatus(message, type) {
         status.textContent = message;
         status.className = type;
+    }
+}
+
+
+),
+
+// Add this after the DOMContentLoaded event listener
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('scroll-left')) {
+        const controls = e.target.nextElementSibling;
+        controls.scrollBy({ left: -200, behavior: 'smooth' });
+    } else if (e.target.classList.contains('scroll-right')) {
+        const controls = e.target.previousElementSibling;
+        controls.scrollBy({ left: 200, behavior: 'smooth' });
     }
 });

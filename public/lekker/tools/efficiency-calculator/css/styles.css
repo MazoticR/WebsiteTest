@@ -52,22 +52,85 @@ button:hover {
     border-left: 4px solid #4CAF50;
 }
 
-.idle-time-input {
-    margin: 10px 0;
+/* Replace the existing .idle-time-controls styles with these: */
+.idle-time-controls {
     display: flex;
-    align-items: center;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-top: 15px;
+}
+
+.idle-time-input {
+    display: flex;
+    flex-direction: column;
+    min-width: 80px;
 }
 
 .idle-time-input label {
-    width: 50px;
     font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
 }
 
 .idle-time-input input {
-    padding: 5px;
+    padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    text-align: center;
     width: 80px;
+}
+
+/* Add these new styles */
+.idle-time-controls-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+
+/* Add this for validation feedback */
+.idle-time.invalid {
+    border-color: #ff4444;
+    background-color: #ffeeee;
+}
+
+.scroll-left, .scroll-right {
+    background: #f0f0f0;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.scroll-left:hover, .scroll-right:hover {
+    background: #e0e0e0;
+}
+
+/* Add to CSS */
+.idle-time-input.current-day label {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* Add scrollbar styling for better UX */
+.idle-time-controls::-webkit-scrollbar {
+    height: 8px;
+}
+
+.idle-time-controls::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.idle-time-controls::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.idle-time-controls::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 #status {
