@@ -129,19 +129,25 @@ function findWorkerSections(data) {
             currentWorker = {
                 id: parts[0],
                 name: parts[1],
-                startRow: i,
-                operations: []
+                startRow: i
             };
+            continue;
         }
-        // Operations header row
-        else if (currentWorker && row[0] === 'Operacion') {
+        
+        if (!currentWorker) continue;
+        
+        // Look for the operations header pattern
+        if (row[0] === 'Operacion' && row[1] === 'Estilo') {
             currentWorker.operationsHeaderRow = i;
+            continue;
         }
-        // Worked hours row (empty first cell, "Horas trabajadas" in second cell)
-        else if (currentWorker && row[0] === '' && row[1] === 'Horas trabajadas') {
+        
+        // Look for the worked hours pattern (empty first cell, "Horas trabajadas" in second cell)
+        if (row[0] === '' && row[1] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-            currentWorker.idleTimeRow = i + 1; // Next row is idle time
-            currentWorker.efficiencyRow = i + 2; // Then efficiency
+            currentWorker.idleTimeRow = i + 1;
+            currentWorker.efficiencyRow = i + 2;
+            continue;
         }
     }
     
@@ -177,32 +183,32 @@ function calculateEfficiencies() {
     // 3. Process each worker
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
+        // Debug: Show what we found for this worker
+        console.log(`Worker ${worker.id} rows:`, {
+            operationsHeader: worker.operationsHeaderRow,
+            workedHours: worker.workedHoursRow,
+            idleTime: worker.idleTimeRow,
+            efficiency: worker.efficiencyRow
+        });
+
         // Verify we have all required rows
-        if (!worker.workedHoursRow || !worker.idleTimeRow) {
-            console.warn(`Missing required rows for worker ${worker.id}`);
+        if (worker.workedHoursRow === undefined || worker.idleTimeRow === undefined) {
+            console.warn(`Skipping worker ${worker.id} - missing required rows`);
             return;
         }
 
-        // Ensure the idle time row exists and has the correct label
+        // Ensure the idle time row exists and is properly formatted
         if (!jsonData[worker.idleTimeRow]) {
             jsonData[worker.idleTimeRow] = Array(15).fill('');
         }
         jsonData[worker.idleTimeRow][0] = '';
         jsonData[worker.idleTimeRow][1] = 'Horas tiempo inactivo';
 
-        // Update idle times in the data structure
+        // Update idle times
         Object.entries(dayColumns).forEach(([day, col]) => {
             if (idleTimes[worker.id]?.[day]) {
-                // Convert the input to Excel time format if needed
-                const timeValue = idleTimes[worker.id][day];
-                if (timeValue.includes(':')) {
-                    const [hours, minutes] = timeValue.split(':');
-                    const excelTime = `${hours}:${minutes.padStart(2, '0')}`;
-                    jsonData[worker.idleTimeRow][col] = excelTime;
-                } else {
-                    jsonData[worker.idleTimeRow][col] = timeValue;
-                }
-                console.log(`Updated ${worker.id} ${day} idle time to ${timeValue}`);
+                jsonData[worker.idleTimeRow][col] = idleTimes[worker.id][day];
+                console.log(`Updated ${worker.id} ${day} idle time to ${idleTimes[worker.id][day]}`);
             }
         });
     });
@@ -235,14 +241,11 @@ function calculateEfficiencies() {
     }
     
 function downloadModifiedFile() {
-    // Create a deep copy of the data to avoid modifying the original
-    const dataToExport = JSON.parse(JSON.stringify(jsonData));
-    
     // Create a new workbook
     const newWorkbook = XLSX.utils.book_new();
     
     // Convert our modified data to a worksheet
-    const newWorksheet = XLSX.utils.aoa_to_sheet(dataToExport);
+    const newWorksheet = XLSX.utils.aoa_to_sheet(jsonData);
     
     // Add the worksheet to the workbook
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Modified Data");
@@ -254,12 +257,11 @@ function downloadModifiedFile() {
     XLSX.writeFile(newWorkbook, 'modified_' + fileName.textContent, {
         bookType: 'xlsx',
         type: 'array',
-        cellDates: true,
-        cellStyles: true
+        cellDates: true
     });
     
     showStatus('Archivo exportado correctamente', 'success');
-} 
+}
     function showStatus(message, type) {
         status.textContent = message;
         status.className = type;
