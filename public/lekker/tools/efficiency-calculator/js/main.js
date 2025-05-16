@@ -48,49 +48,53 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsArrayBuffer(file);
     }
     
-    function displayWorkerControls() {
-        workerControls.innerHTML = '';
+function displayWorkerControls() {
+    workerControls.innerHTML = '';
+    
+    // Find all worker sections
+    const workerSections = findWorkerSections(jsonData);
+    
+    // Find day columns (Lun, Mar, Mie, etc.)
+    const days = [];
+    const headerRow = jsonData.find(row => row && row[0] === 'Operacion');
+    if (headerRow) {
+        for (let i = 0; i < headerRow.length; i++) {
+            if (['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].includes(headerRow[i])) {
+                days.push({
+                    name: headerRow[i],
+                    index: i
+                });
+            }
+        }
+    }
+
+    workerSections.forEach(section => {
+        const workerDiv = document.createElement('div');
+        workerDiv.className = 'worker-section';
         
-        // Find all worker sections
-        const workerSections = findWorkerSections(jsonData);
+        const workerName = section.name;
+        const workerId = section.id;
         
-        workerSections.forEach(section => {
-            const workerDiv = document.createElement('div');
-            workerDiv.className = 'worker-section';
-            
-            const workerName = section.name;
-            const workerId = section.id;
-            
-            workerDiv.innerHTML = `
-                <h3>${workerId} / ${workerName}</h3>
-                <div class="idle-time-controls"></div>
-            `;
-            
-            const idleTimeControls = workerDiv.querySelector('.idle-time-controls');
-            
-            // Add idle time inputs for each day
-            const days = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
-            days.forEach(day => {
-                const dayIndex = jsonData[3].indexOf(day); // Find day column index
-                if (dayIndex !== -1) {
-                    const idleTimeInput = document.createElement('div');
-                    idleTimeInput.className = 'idle-time-input';
-                    idleTimeInput.innerHTML = `
-                        <label>${day}:</label>
+        workerDiv.innerHTML = `
+            <h3>${workerId} / ${workerName}</h3>
+            <div class="idle-time-controls">
+                ${days.map(day => `
+                    <div class="idle-time-input">
+                        <label>${day.name}:</label>
                         <input type="text" 
                                class="idle-time" 
                                data-worker="${workerId}" 
-                               data-day="${day}" 
+                               data-day="${day.name}" 
                                placeholder="HH:MM" 
                                pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$">
-                    `;
-                    idleTimeControls.appendChild(idleTimeInput);
-                }
-            });
-            
-            workerControls.appendChild(workerDiv);
-        });
-    }
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        workerControls.appendChild(workerDiv);
+    });
+}
     
     function findWorkerSections(data) {
         const workers = [];
