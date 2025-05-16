@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efficiency Calculator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Efficiency Calculator</h1>
+        
+        <div class="upload-section">
+            <input type="file" id="excelFile" accept=".xlsx, .xls">
+            <button id="uploadBtn">Upload File</button>
+        </div>
+        
+        <div id="fileInfo" class="hidden">
+            <h2>File: <span id="fileName"></span></h2>
+            <div id="workerControls"></div>
+            <button id="calculateBtn" class="hidden">Calculate Efficiencies</button>
+            <button id="downloadBtn" class="hidden">Download Modified File</button>
+        </div>
+        
+        <div id="status"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
