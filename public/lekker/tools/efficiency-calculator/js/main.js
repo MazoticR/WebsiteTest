@@ -136,17 +136,17 @@ function findWorkerSections(data) {
         
         if (!currentWorker) continue;
         
-        // Look for the operations header pattern
-        if (row[0] === 'Operacion' && row[1] === 'Estilo') {
+        // Look for the operations header (starts with "Operacion" in first cell)
+        if (row[0] === 'Operacion') {
             currentWorker.operationsHeaderRow = i;
             continue;
         }
         
-        // Look for the worked hours pattern (empty first cell, "Horas trabajadas" in second cell)
+        // Look for worked hours row (empty first cell, "Horas trabajadas" in second cell)
         if (row[0] === '' && row[1] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-            currentWorker.idleTimeRow = i + 1;
-            currentWorker.efficiencyRow = i + 2;
+            currentWorker.idleTimeRow = i + 1; // Next row is idle time
+            currentWorker.efficiencyRow = i + 2; // Then efficiency
             continue;
         }
     }
@@ -185,10 +185,10 @@ function calculateEfficiencies() {
     workerSections.forEach(worker => {
         // Debug: Show what we found for this worker
         console.log(`Worker ${worker.id} rows:`, {
-            operationsHeader: worker.operationsHeaderRow,
-            workedHours: worker.workedHoursRow,
-            idleTime: worker.idleTimeRow,
-            efficiency: worker.efficiencyRow
+            operationsHeader: jsonData[worker.operationsHeaderRow],
+            workedHours: jsonData[worker.workedHoursRow],
+            idleTime: jsonData[worker.idleTimeRow],
+            efficiency: jsonData[worker.efficiencyRow]
         });
 
         // Verify we have all required rows
@@ -199,7 +199,7 @@ function calculateEfficiencies() {
 
         // Ensure the idle time row exists and is properly formatted
         if (!jsonData[worker.idleTimeRow]) {
-            jsonData[worker.idleTimeRow] = Array(15).fill('');
+            jsonData[worker.idleTimeRow] = [];
         }
         jsonData[worker.idleTimeRow][0] = '';
         jsonData[worker.idleTimeRow][1] = 'Horas tiempo inactivo';
