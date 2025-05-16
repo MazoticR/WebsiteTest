@@ -140,12 +140,10 @@ function findWorkerSections(data) {
         // Worked hours row
         else if (currentWorker && row[0] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-            // The idle time row is ALWAYS the next row after "Horas trabajadas"
+            // The idle time row is ALWAYS the next row
             currentWorker.idleTimeRow = i + 1;
-        }
-        // Efficiency row (after idle time)
-        else if (currentWorker && row[0] === 'Eficiencia diaria') {
-            currentWorker.efficiencyRow = i;
+            // Efficiency row is after that
+            currentWorker.efficiencyRow = i + 2;
         }
     }
     
@@ -182,15 +180,27 @@ function calculateEfficiencies() {
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
         // Verify we have all required rows
-        if (!worker.workedHoursRow || !worker.idleTimeRow) {
+        if (worker.workedHoursRow === undefined || worker.idleTimeRow === undefined) {
             console.warn(`Missing required rows for worker ${worker.id}`);
             return;
         }
 
-        // Ensure the idle time row exists in our data structure
+        // Log the rows we found for debugging
+        console.log(`Processing worker ${worker.id}:`, {
+            workedHoursRow: worker.workedHoursRow,
+            idleTimeRow: worker.idleTimeRow,
+            efficiencyRow: worker.efficiencyRow,
+            data: jsonData.slice(worker.workedHoursRow - 1, worker.workedHoursRow + 3)
+        });
+
+        // Ensure the idle time row exists
         if (!jsonData[worker.idleTimeRow]) {
             jsonData[worker.idleTimeRow] = [];
-            jsonData[worker.idleTimeRow][0] = ''; // Set empty first cell
+        }
+        
+        // Ensure it has the label in the first column
+        if (jsonData[worker.idleTimeRow][0] !== 'Horas tiempo inactivo') {
+            jsonData[worker.idleTimeRow][0] = 'Horas tiempo inactivo';
         }
 
         // Update idle times in the data structure
@@ -200,49 +210,7 @@ function calculateEfficiencies() {
                 jsonData[worker.idleTimeRow][col] = idleTimes[worker.id][day];
             }
         });
-
-        // If we have an efficiency row, update it
-        if (worker.efficiencyRow) {
-            if (!jsonData[worker.efficiencyRow]) {
-                jsonData[worker.efficiencyRow] = [];
-                jsonData[worker.efficiencyRow][0] = ''; // Set empty first cell
-            }
-
-            Object.entries(dayColumns).forEach(([day, col]) => {
-                const workedHoursStr = jsonData[worker.workedHoursRow]?.[col] || '0:00';
-                const idleHoursStr = jsonData[worker.idleTimeRow]?.[col] || '0:00';
-                
-                const workedMinutes = timeToMinutes(workedHoursStr);
-                const idleMinutes = timeToMinutes(idleHoursStr);
-                const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
-
-                // Calculate efficiency for each operation
-                let totalStandardMinutes = 0;
-                
-                for (let i = worker.operationsHeaderRow + 1; i < worker.workedHoursRow; i++) {
-                    const row = jsonData[i];
-                    if (row && row[0] && row[0] !== '') {
-                        const produced = Number(row[col]) || 0;
-                        const minutesPerPiece = Number(row[14]) || 0; // Column N
-                        
-                        if (minutesPerPiece > 0) {
-                            totalStandardMinutes += produced * minutesPerPiece;
-                        }
-                    }
-                }
-
-                // Calculate daily efficiency (as decimal)
-                const efficiency = realWorkedMinutes > 0 ? 
-                    (totalStandardMinutes / realWorkedMinutes) : 0;
-                
-                // Update efficiency cell directly
-                jsonData[worker.efficiencyRow][col] = efficiency;
-            });
-        }
     });
-
-// Add this at the end of calculateEfficiencies, before the success message
-console.log("Modified data structure:", jsonData);
 
     showStatus('¡Datos actualizados correctamente!', 'success');
     downloadBtn.classList.remove('hidden');
@@ -282,36 +250,17 @@ function downloadModifiedFile() {
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Modified Data");
     
     // Force Excel to recalculate all formulas when opened
-    if (!newWorkbook.Workbook) newWorkbook.Workbook = {};
-    if (!newWorkbook.Workbook.CalcPr) {
-        newWorkbook.Workbook.CalcPr = {
+    newWorkbook.Props = {
+        ...newWorkbook.Props,
+        CalcPr: {
             calcId: 999999,
             calcMode: 'auto',
             fullCalcOnLoad: true
-        };
-    } else {
-        newWorkbook.Workbook.CalcPr.fullCalcOnLoad = true;
-    }
+        }
+    };
     
-    // Generate the file with correct formatting
-    const wbout = XLSX.write(newWorkbook, {
-        bookType: 'xlsx',
-        type: 'array',
-        cellStyles: true
-    });
-    
-    // Create download
-    const blob = new Blob([wbout], {type: 'application/octet-stream'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'modified_' + fileName.textContent;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    }, 100);
+    // Generate the file
+    XLSX.writeFile(newWorkbook, 'modified_' + fileName.textContent);
     
     showStatus('Archivo exportado correctamente', 'success');
 }
