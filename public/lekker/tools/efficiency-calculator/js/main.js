@@ -129,21 +129,18 @@ function findWorkerSections(data) {
             currentWorker = {
                 id: parts[0],
                 name: parts[1],
-                startRow: i,
-                operations: []
+                startRow: i
             };
         }
         // Operations header row
         else if (currentWorker && row[0] === 'Operacion') {
             currentWorker.operationsHeaderRow = i;
         }
-        // Worked hours row
-        else if (currentWorker && row[0] === 'Horas trabajadas') {
+        // Worked hours row (might be empty string in first column)
+        else if (currentWorker && row[0] === '' && row[1] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-            // The idle time row is ALWAYS the next row
-            currentWorker.idleTimeRow = i + 1;
-            // Efficiency row is after that
-            currentWorker.efficiencyRow = i + 2;
+            currentWorker.idleTimeRow = i + 1; // Next row is idle time
+            currentWorker.efficiencyRow = i + 2; // Then efficiency
         }
     }
     
@@ -179,35 +176,24 @@ function calculateEfficiencies() {
     // 3. Process each worker
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
-        // Verify we have all required rows
-        if (worker.workedHoursRow === undefined || worker.idleTimeRow === undefined) {
-            console.warn(`Missing required rows for worker ${worker.id}`);
-            return;
-        }
-
-        // Log the rows we found for debugging
+        // Debug: Show what we found for this worker
         console.log(`Processing worker ${worker.id}:`, {
-            workedHoursRow: worker.workedHoursRow,
-            idleTimeRow: worker.idleTimeRow,
-            efficiencyRow: worker.efficiencyRow,
-            data: jsonData.slice(worker.workedHoursRow - 1, worker.workedHoursRow + 3)
+            workedHoursRow: jsonData[worker.workedHoursRow],
+            idleTimeRow: jsonData[worker.idleTimeRow],
+            efficiencyRow: jsonData[worker.efficiencyRow]
         });
-
-        // Ensure the idle time row exists
-        if (!jsonData[worker.idleTimeRow]) {
-            jsonData[worker.idleTimeRow] = [];
-        }
-        
-        // Ensure it has the label in the first column
-        if (jsonData[worker.idleTimeRow][0] !== 'Horas tiempo inactivo') {
-            jsonData[worker.idleTimeRow][0] = 'Horas tiempo inactivo';
-        }
 
         // Update idle times in the data structure
         Object.entries(dayColumns).forEach(([day, col]) => {
             if (idleTimes[worker.id]?.[day]) {
-                console.log(`Updating worker ${worker.id} ${day} idle time to ${idleTimes[worker.id][day]}`);
+                // Ensure the idle time row exists
+                if (!jsonData[worker.idleTimeRow]) {
+                    jsonData[worker.idleTimeRow] = [];
+                }
+                
+                // Update the cell
                 jsonData[worker.idleTimeRow][col] = idleTimes[worker.id][day];
+                console.log(`Updated ${worker.id} ${day} idle time to ${idleTimes[worker.id][day]}`);
             }
         });
     });
@@ -249,15 +235,8 @@ function downloadModifiedFile() {
     // Add the worksheet to the workbook
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Modified Data");
     
-    // Force Excel to recalculate all formulas when opened
-    newWorkbook.Props = {
-        ...newWorkbook.Props,
-        CalcPr: {
-            calcId: 999999,
-            calcMode: 'auto',
-            fullCalcOnLoad: true
-        }
-    };
+    // Force Excel to recalculate when opened
+    newWorkbook.CalcProperties = { fullCalcOnLoad: true };
     
     // Generate the file
     XLSX.writeFile(newWorkbook, 'modified_' + fileName.textContent);
