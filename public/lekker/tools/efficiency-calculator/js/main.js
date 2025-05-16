@@ -133,8 +133,12 @@ function findWorkerSections(data) {
             currentWorker.operationsHeaderRow = i;
         } else if (currentWorker && row && row[0] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-            // La fila de tiempo inactivo debe ser la siguiente
-            currentWorker.endRow = i + 7; // Ajustar según estructura
+        } else if (currentWorker && row && row[0] === 'Eficiencia diaria') {
+            currentWorker.efficiencyRow = i;
+        } else if (currentWorker && row && row[0] === 'Bono') {
+            currentWorker.bonusRow = i;
+        } else if (currentWorker && row && row[0] === 'Bono final') {
+            currentWorker.endRow = i;
         }
     }
     
@@ -146,17 +150,17 @@ function calculateEfficiencies() {
     const idleTimeInputs = document.querySelectorAll('.idle-time');
     const idleTimes = {};
     
-    // 1. Recopilar todos los tiempos de inactividad
+    // 1. Collect all idle times
     idleTimeInputs.forEach(input => {
         const workerId = input.dataset.worker;
         const day = input.dataset.day;
         const value = input.value.trim();
         
         if (!idleTimes[workerId]) idleTimes[workerId] = {};
-        idleTimes[workerId][day] = value || '0:00'; // Valor por defecto
+        idleTimes[workerId][day] = value || '0:00';
     });
 
-    // 2. Encontrar columnas de días
+    // 2. Find day columns
     const headerRow = jsonData.find(row => row && row[0] === 'Operacion');
     const dayColumns = {};
     if (headerRow) {
@@ -167,55 +171,71 @@ function calculateEfficiencies() {
         });
     }
 
-    // 3. Procesar cada trabajador
+    // 3. Process each worker
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
-        // Encontrar fila de "Horas tiempo inactivo" (debe ser workedHoursRow + 1)
+        // Find idle time row (workedHoursRow + 1)
         const idleTimeRowIndex = worker.workedHoursRow + 1;
-        const idleTimeRow = jsonData[idleTimeRowIndex];
         
-        // Verificar que encontramos la fila correcta
-        if (idleTimeRow && idleTimeRow[0] === '') {
-            Object.entries(dayColumns).forEach(([day, col]) => {
-                // Actualizar tiempo inactivo en los datos
-                if (idleTimes[worker.id]?.[day]) {
-                    jsonData[idleTimeRowIndex][col] = idleTimes[worker.id][day];
-                }
-                
-                // Resto del cálculo de eficiencia...
-                const workedHoursStr = jsonData[worker.workedHoursRow]?.[col] || '0:00';
-                const idleHoursStr = idleTimes[worker.id]?.[day] || '0:00';
-                
-                const workedMinutes = timeToMinutes(workedHoursStr);
-                const idleMinutes = timeToMinutes(idleHoursStr);
-                const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
+        // Find efficiency row (workedHoursRow + 2)
+        const efficiencyRowIndex = worker.workedHoursRow + 2;
+        
+        // Find bonus row (workedHoursRow + 3)
+        const bonusRowIndex = worker.workedHoursRow + 3;
 
-                // Calcular eficiencia...
-                let totalEfficiency = 0;
-                let operationCount = 0;
-                
-                for (let i = worker.operationsHeaderRow + 1; i < worker.workedHoursRow; i++) {
-                    const row = jsonData[i];
-                    if (row && row[0] && row[0] !== '') {
-                        const produced = Number(row[col]) || 0;
-                        const target = Number(row[3]) || 1;
-                        
-                        if (target > 0 && realWorkedMinutes > 0) {
-                            const operationEfficiency = (produced / target) * 100;
-                            totalEfficiency += operationEfficiency;
-                            operationCount++;
-                        }
+        // Update idle times in the data
+        Object.entries(dayColumns).forEach(([day, col]) => {
+            // Set idle time
+            if (idleTimes[worker.id]?.[day]) {
+                if (!jsonData[idleTimeRowIndex]) jsonData[idleTimeRowIndex] = [];
+                jsonData[idleTimeRowIndex][col] = idleTimes[worker.id][day];
+            }
+
+            // Calculate efficiency
+            const workedHoursStr = jsonData[worker.workedHoursRow]?.[col] || '0:00';
+            const idleHoursStr = idleTimes[worker.id]?.[day] || '0:00';
+            
+            const workedMinutes = timeToMinutes(workedHoursStr);
+            const idleMinutes = timeToMinutes(idleHoursStr);
+            const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
+
+            // Calculate efficiency for each operation
+            let totalStandardMinutes = 0;
+            let operationCount = 0;
+            
+            for (let i = worker.operationsHeaderRow + 1; i < worker.workedHoursRow; i++) {
+                const row = jsonData[i];
+                if (row && row[0] && row[0] !== '') {
+                    const produced = Number(row[col]) || 0;
+                    const minutesPerPiece = Number(row[14]) || 0; // Column N (0-based index 14)
+                    
+                    if (minutesPerPiece > 0 && produced > 0) {
+                        totalStandardMinutes += produced * minutesPerPiece;
+                        operationCount++;
                     }
                 }
+            }
 
-                // Actualizar eficiencia
-                const avgEfficiency = operationCount > 0 ? (totalEfficiency / operationCount) : 0;
-                if (jsonData[worker.efficiencyRow]) {
-                    jsonData[worker.efficiencyRow][col] = avgEfficiency.toFixed(2);
-                }
-            });
-        } else {
-            console.error('No se encontró la fila de tiempo inactivo para', worker.id);
+            // Calculate daily efficiency
+            const efficiency = realWorkedMinutes > 0 ? 
+                (totalStandardMinutes / realWorkedMinutes) * 100 : 0;
+            
+            // Update efficiency row
+            if (!jsonData[efficiencyRowIndex]) jsonData[efficiencyRowIndex] = [];
+            jsonData[efficiencyRowIndex][col] = efficiency / 100; // Excel shows it as decimal
+        });
+
+        // Update total efficiency (average of daily efficiencies)
+        if (jsonData[efficiencyRowIndex]) {
+            const efficiencyValues = Object.values(dayColumns)
+                .map(col => parseFloat(jsonData[efficiencyRowIndex][col]) || 0)
+                .filter(val => !isNaN(val));
+            
+            const avgEfficiency = efficiencyValues.length > 0 ? 
+                efficiencyValues.reduce((a, b) => a + b, 0) / efficiencyValues.length : 0;
+            
+            // Find the Total column (usually column M, index 12)
+            jsonData[efficiencyRowIndex][12] = avgEfficiency;
         }
     });
 
@@ -246,29 +266,24 @@ function calculateEfficiencies() {
         return `${hours}:${mins.toString().padStart(2, '0')}`;
     }
     
-    function downloadModifiedFile() {
-        // Convert jsonData back to worksheet
-        const newWorksheet = XLSX.utils.aoa_to_sheet(jsonData);
-        
-        // Update the workbook
-        workbook.Sheets[workbook.SheetNames[0]] = newWorksheet;
-        
-        // Generate Excel file
-        const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-        
-        // Create download link
-        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'modified_' + fileName.textContent;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showStatus('File downloaded successfully!', 'success');
-    }
+function downloadModifiedFile() {
+    // Create a new workbook
+    const newWorkbook = XLSX.utils.book_new();
+    
+    // Convert our modified data to a worksheet
+    const newWorksheet = XLSX.utils.aoa_to_sheet(jsonData);
+    
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Modified Data");
+    
+    // Set calculation properties to force refresh on open
+    newWorkbook.CalcProperties = { fullCalcOnLoad: true };
+    
+    // Generate the file
+    XLSX.writeFile(newWorkbook, 'modified_' + fileName.textContent);
+    
+    showStatus('Archivo exportado correctamente', 'success');
+}
     
     function showStatus(message, type) {
         status.textContent = message;
