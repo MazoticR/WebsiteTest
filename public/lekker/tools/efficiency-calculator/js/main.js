@@ -114,60 +114,49 @@ function detectDays(data) {
     return days;
 }
     
-    function findWorkerSections(data) {
-        const workers = [];
-        let currentWorker = null;
-        
-        for (let i = 0; i < data.length; i++) {
-            const row = data[i];
-            if (row && row[0] && typeof row[0] === 'string' && row[0].includes('/')) {
-                // This is a worker header row
-                if (currentWorker) {
-                    workers.push(currentWorker);
-                }
-                
-                const parts = row[0].split('/');
-                currentWorker = {
-                    id: parts[0].trim(),
-                    name: parts[1].trim(),
-                    startRow: i,
-                    operations: []
-                };
-            } else if (currentWorker && row && row[0] && row[0] === 'Operacion') {
-                // This is the operations header row
-                currentWorker.operationsHeaderRow = i;
-            } else if (currentWorker && row && row[0] && row[0] === 'Horas trabajadas') {
-                // This is the worked hours row
-                currentWorker.workedHoursRow = i;
-                currentWorker.idleTimeRow = i + 1;
-                currentWorker.efficiencyRow = i + 2;
-                currentWorker.bonusRow = i + 3;
-                currentWorker.endRow = i + 7; // Adjust based on your file structure
-            }
+function findWorkerSections(data) {
+    const workers = [];
+    let currentWorker = null;
+    
+    for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        if (row && row[0] && typeof row[0] === 'string' && row[0].includes('/')) {
+            if (currentWorker) workers.push(currentWorker);
+            
+            const parts = row[0].split('/');
+            currentWorker = {
+                id: parts[0].trim(),
+                name: parts[1].trim(),
+                startRow: i
+            };
+        } else if (currentWorker && row && row[0] === 'Operacion') {
+            currentWorker.operationsHeaderRow = i;
+        } else if (currentWorker && row && row[0] === 'Horas trabajadas') {
+            currentWorker.workedHoursRow = i;
+            // La fila de tiempo inactivo debe ser la siguiente
+            currentWorker.endRow = i + 7; // Ajustar según estructura
         }
-        
-        if (currentWorker) {
-            workers.push(currentWorker);
-        }
-        
-        return workers;
     }
+    
+    if (currentWorker) workers.push(currentWorker);
+    return workers;
+}
     
 function calculateEfficiencies() {
     const idleTimeInputs = document.querySelectorAll('.idle-time');
     const idleTimes = {};
     
-    // 1. Collect all idle times from inputs
+    // 1. Recopilar todos los tiempos de inactividad
     idleTimeInputs.forEach(input => {
         const workerId = input.dataset.worker;
         const day = input.dataset.day;
         const value = input.value.trim();
         
         if (!idleTimes[workerId]) idleTimes[workerId] = {};
-        idleTimes[workerId][day] = value || '0:00'; // Default to 0:00 if empty
+        idleTimes[workerId][day] = value || '0:00'; // Valor por defecto
     });
 
-    // 2. Find day columns
+    // 2. Encontrar columnas de días
     const headerRow = jsonData.find(row => row && row[0] === 'Operacion');
     const dayColumns = {};
     if (headerRow) {
@@ -178,55 +167,59 @@ function calculateEfficiencies() {
         });
     }
 
-    // 3. Process each worker section
+    // 3. Procesar cada trabajador
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
-        // Find the "Horas tiempo inactivo" row
-        const idleTimeRow = jsonData[worker.workedHoursRow + 1];
+        // Encontrar fila de "Horas tiempo inactivo" (debe ser workedHoursRow + 1)
+        const idleTimeRowIndex = worker.workedHoursRow + 1;
+        const idleTimeRow = jsonData[idleTimeRowIndex];
         
-        // Update idle times and calculate efficiencies for each day
-        Object.entries(dayColumns).forEach(([day, col]) => {
-            // Update idle time in the worksheet data
-            if (idleTimeRow && idleTimes[worker.id]?.[day]) {
-                idleTimeRow[col] = idleTimes[worker.id][day];
-            }
+        // Verificar que encontramos la fila correcta
+        if (idleTimeRow && idleTimeRow[0] === '') {
+            Object.entries(dayColumns).forEach(([day, col]) => {
+                // Actualizar tiempo inactivo en los datos
+                if (idleTimes[worker.id]?.[day]) {
+                    jsonData[idleTimeRowIndex][col] = idleTimes[worker.id][day];
+                }
+                
+                // Resto del cálculo de eficiencia...
+                const workedHoursStr = jsonData[worker.workedHoursRow]?.[col] || '0:00';
+                const idleHoursStr = idleTimes[worker.id]?.[day] || '0:00';
+                
+                const workedMinutes = timeToMinutes(workedHoursStr);
+                const idleMinutes = timeToMinutes(idleHoursStr);
+                const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
 
-            // Calculate real worked time (worked hours - idle time)
-            const workedHoursStr = jsonData[worker.workedHoursRow]?.[col] || '0:00';
-            const idleHoursStr = idleTimes[worker.id]?.[day] || '0:00';
-            
-            const workedMinutes = timeToMinutes(workedHoursStr);
-            const idleMinutes = timeToMinutes(idleHoursStr);
-            const realWorkedMinutes = Math.max(0, workedMinutes - idleMinutes);
-
-            // Calculate efficiency for each operation
-            let totalEfficiency = 0;
-            let operationCount = 0;
-            
-            // Get all operation rows for this worker
-            for (let i = worker.operationsHeaderRow + 1; i < worker.workedHoursRow; i++) {
-                const row = jsonData[i];
-                if (row && row[0] && row[0] !== '') { // Valid operation row
-                    const produced = Number(row[col]) || 0;
-                    const target = Number(row[3]) || 1; // Column D (index 3) is "Meta"
-                    
-                    if (target > 0 && realWorkedMinutes > 0) {
-                        const operationEfficiency = (produced / target) * 100;
-                        totalEfficiency += operationEfficiency;
-                        operationCount++;
+                // Calcular eficiencia...
+                let totalEfficiency = 0;
+                let operationCount = 0;
+                
+                for (let i = worker.operationsHeaderRow + 1; i < worker.workedHoursRow; i++) {
+                    const row = jsonData[i];
+                    if (row && row[0] && row[0] !== '') {
+                        const produced = Number(row[col]) || 0;
+                        const target = Number(row[3]) || 1;
+                        
+                        if (target > 0 && realWorkedMinutes > 0) {
+                            const operationEfficiency = (produced / target) * 100;
+                            totalEfficiency += operationEfficiency;
+                            operationCount++;
+                        }
                     }
                 }
-            }
 
-            // Update efficiency in the worksheet
-            const avgEfficiency = operationCount > 0 ? (totalEfficiency / operationCount) : 0;
-            if (jsonData[worker.efficiencyRow]) {
-                jsonData[worker.efficiencyRow][col] = avgEfficiency.toFixed(2);
-            }
-        });
+                // Actualizar eficiencia
+                const avgEfficiency = operationCount > 0 ? (totalEfficiency / operationCount) : 0;
+                if (jsonData[worker.efficiencyRow]) {
+                    jsonData[worker.efficiencyRow][col] = avgEfficiency.toFixed(2);
+                }
+            });
+        } else {
+            console.error('No se encontró la fila de tiempo inactivo para', worker.id);
+        }
     });
 
-    showStatus('Efficiencies recalculated successfully!', 'success');
+    showStatus('¡Datos actualizados correctamente!', 'success');
     downloadBtn.classList.remove('hidden');
 }
     
