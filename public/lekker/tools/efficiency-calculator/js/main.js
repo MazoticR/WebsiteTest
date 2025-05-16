@@ -140,15 +140,11 @@ function findWorkerSections(data) {
         // Worked hours row
         else if (currentWorker && row[0] === 'Horas trabajadas') {
             currentWorker.workedHoursRow = i;
-        }
-        // Idle time row (immediately after worked hours)
-        else if (currentWorker && i === currentWorker.workedHoursRow + 1 && 
-                (row[0] === '' || row[0] === 'Horas tiempo inactivo')) {
-            currentWorker.idleTimeRow = i;
+            // The idle time row is ALWAYS the next row after "Horas trabajadas"
+            currentWorker.idleTimeRow = i + 1;
         }
         // Efficiency row (after idle time)
-        else if (currentWorker && i === currentWorker.workedHoursRow + 2 && 
-                (row[0] === '' || row[0] === 'Eficiencia diaria')) {
+        else if (currentWorker && row[0] === 'Eficiencia diaria') {
             currentWorker.efficiencyRow = i;
         }
     }
@@ -185,28 +181,31 @@ function calculateEfficiencies() {
     // 3. Process each worker
     const workerSections = findWorkerSections(jsonData);
     workerSections.forEach(worker => {
-        if (!worker.idleTimeRow) {
-            console.warn(`No idle time row found for worker ${worker.id}`);
+        // Verify we have all required rows
+        if (!worker.workedHoursRow || !worker.idleTimeRow) {
+            console.warn(`Missing required rows for worker ${worker.id}`);
             return;
         }
 
-        // Ensure the row exists in our data structure
+        // Ensure the idle time row exists in our data structure
         if (!jsonData[worker.idleTimeRow]) {
             jsonData[worker.idleTimeRow] = [];
+            jsonData[worker.idleTimeRow][0] = ''; // Set empty first cell
         }
 
         // Update idle times in the data structure
         Object.entries(dayColumns).forEach(([day, col]) => {
             if (idleTimes[worker.id]?.[day]) {
-                // Directly modify the cell in our data structure
+                console.log(`Updating worker ${worker.id} ${day} idle time to ${idleTimes[worker.id][day]}`);
                 jsonData[worker.idleTimeRow][col] = idleTimes[worker.id][day];
             }
         });
 
-        // Force recalculate efficiency by removing formulas and setting values directly
+        // If we have an efficiency row, update it
         if (worker.efficiencyRow) {
             if (!jsonData[worker.efficiencyRow]) {
                 jsonData[worker.efficiencyRow] = [];
+                jsonData[worker.efficiencyRow][0] = ''; // Set empty first cell
             }
 
             Object.entries(dayColumns).forEach(([day, col]) => {
@@ -241,6 +240,9 @@ function calculateEfficiencies() {
             });
         }
     });
+
+// Add this at the end of calculateEfficiencies, before the success message
+console.log("Modified data structure:", jsonData);
 
     showStatus('¡Datos actualizados correctamente!', 'success');
     downloadBtn.classList.remove('hidden');
