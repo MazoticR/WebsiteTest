@@ -13,21 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper Functions
     const formatDateForAPI = (year, month, day) => 
-        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        `${year}-${month.padStart(2, '0')}-${String(day).padStart(2, '0')}`; // Fixed: String() conversion
 
-    const getMonthName = (monthValue) => {
-        const months = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        return months[parseInt(monthValue) - 1];
-    };
+    const getMonthName = (monthValue) => [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ][parseInt(monthValue) - 1];
 
-    const formatDisplayDate = (dateString) => {
-        if (!dateString) return '';
-        const [month, day, year] = dateString.split('/');
-        return `${day}/${month}/${year}`;
-    };
+    const formatDisplayDate = (dateString) => 
+        dateString ? dateString.split('/').reverse().join('/') : '';
 
     const formatCurrency = (amount) => 
         amount ? '$' + parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') : '$0.00';
@@ -44,23 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Main Functions
     async function fetchVendorNames(vendorIds) {
-        if (vendorIds.length === 0) return;
+        if (!vendorIds.length) return;
         const time = Math.floor(Date.now() / 1000);
-
         try {
-            const response = await fetch(
-                `/api/vendors?token=${API_TOKEN}&time=${time}`
-            );
-            
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
+            const response = await fetch(`/api/vendors?token=${API_TOKEN}&time=${time}`);
             const data = await response.json();
             data.response?.forEach(vendor => {
                 if (vendor.vendor_id && vendor.vendor_name) {
                     vendorCache[vendor.vendor_id] = vendor.vendor_name;
                 }
             });
-            
         } catch (error) {
             console.error("Error fetching vendors:", error);
             resultsDiv.innerHTML += `<p class="error-warning">Nota: No se pudieron cargar los nombres de los proveedores</p>`;
@@ -72,26 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDiv.innerHTML = '<p>No se encontraron órdenes de compra para este período</p>';
             return;
         }
-
         resultsDiv.innerHTML = `
             <h2>Órdenes de Compra - ${getMonthName(monthSelect.value)}/${yearSelect.value}</h2>
             <div class="table-container">
                 <table class="po-table">
-                    <thead>
-                        <tr>
-                            <th>PO Number</th>
-                            <th>Vendor ID</th>
-                            <th>Vendor Name</th>
-                            <th>Item</th>
-                            <th>Material Description</th>
-                            <th>Status</th>
-                            <th>Department</th>
-                            <th>PO Date</th>
-                            <th>Due Date</th>
-                            <th>Total Units</th>
-                            <th>PO Total</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <th>PO Number</th><th>Vendor ID</th><th>Vendor Name</th>
+                        <th>Item</th><th>Material Description</th><th>Status</th>
+                        <th>Department</th><th>PO Date</th><th>Due Date</th>
+                        <th>Total Units</th><th>PO Total</th>
+                    </tr></thead>
                     <tbody>
                         ${orders.map(order => `
                             <tr>
@@ -110,8 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `).join('')}
                     </tbody>
                 </table>
-            </div>
-        `;
+            </div>`;
     }
 
     // Event Listeners
@@ -122,8 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             resultsDiv.innerHTML = '<p>Cargando...</p>';
-
-            // Build API request with date_internal filtering
             const params = new URLSearchParams({
                 token: API_TOKEN,
                 time: time,
@@ -133,13 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 'parameters[1][field]': 'date_internal',
                 'parameters[1][operator]': '<=',
                 'parameters[1][value]': formatDateForAPI(year, month, 
-                    new Date(year, month, 0).getDate())
+                    new Date(year, month, 0).getDate().toString()) // Fixed: .toString()
             });
 
-            // Fetch and filter orders
             const response = await fetch(`/api/purchase_orders?${params}`);
             const data = await response.json();
-            
             const filteredOrders = data.response?.filter(order => 
                 order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
             ) || [];
@@ -149,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             resultsDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
-            console.error("Fetch error:", error);
         }
     });
 
@@ -159,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const time = Math.floor(Date.now() / 1000);
 
         try {
-            // Reuse the same filtering logic as fetch
             const params = new URLSearchParams({
                 token: API_TOKEN,
                 time: time,
@@ -169,51 +139,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 'parameters[1][field]': 'date_internal',
                 'parameters[1][operator]': '<=',
                 'parameters[1][value]': formatDateForAPI(year, month, 
-                    new Date(year, month, 0).getDate())
+                    new Date(year, month, 0).getDate().toString()) // Fixed: .toString()
             });
 
             const response = await fetch(`/api/purchase_orders?${params}`);
             const data = await response.json();
-            
             const filteredOrders = data.response?.filter(order => 
                 order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
             ) || [];
 
-            // Generate CSV
-            const headers = [
-                'PO Number', 'Vendor ID', 'Vendor Name', 'Item', 
-                'Material Description', 'Status', 'Department',
-                'PO Date', 'Due Date', 'Total Units', 'PO Total'
-            ].join(',');
+            const csvContent = [
+                ['PO Number', 'Vendor ID', 'Vendor Name', 'Item', 'Material Description', 
+                 'Status', 'Department', 'PO Date', 'Due Date', 'Total Units', 'PO Total'].join(','),
+                ...filteredOrders.map(order => [
+                    order.purchase_order_id || '',
+                    order.vendor_id || '',
+                    vendorCache[order.vendor_id] || 'Vendor no encontrado',
+                    getFirstItemField(order, 'style_number'),
+                    getFirstItemField(order, 'description'),
+                    getStatus(order),
+                    order.division_id || '',
+                    formatDisplayDate(order.date),
+                    formatDisplayDate(order.date_due),
+                    order.qty || 0,
+                    order.amount || 0
+                ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
 
-            const rows = filteredOrders.map(order => [
-                order.purchase_order_id || '',
-                order.vendor_id || '',
-                vendorCache[order.vendor_id] || 'Vendor no encontrado',
-                getFirstItemField(order, 'style_number'),
-                getFirstItemField(order, 'description'),
-                getStatus(order),
-                order.division_id || '',
-                formatDisplayDate(order.date),
-                formatDisplayDate(order.date_due),
-                order.qty || 0,
-                order.amount || 0
-            ].map(field => `"${field.toString().replace(/"/g, '""')}"`).join(','));
-
-            // Download CSV
-            const blob = new Blob([[headers, ...rows].join('\n')], 
-                { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.download = `ordenes_compra_${month}_${year}.csv`;
-            document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
-
         } catch (error) {
             alert(`Error al exportar: ${error.message}`);
-            console.error("Export error:", error);
         }
     });
 });
