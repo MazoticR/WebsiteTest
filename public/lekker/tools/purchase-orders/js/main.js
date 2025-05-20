@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "26",  //CUT ME TENDER
         '10', //LEKKER
         '70'  // ELEGANT FASHION
-      ];
+    ];
     
     // Cache para los nombres de vendors
     const vendorCache = {};
@@ -22,14 +22,41 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         resultsDiv.innerHTML = '<p>Cargando...</p>';
         
-        // fetch all purchase orders
+        // Create date range for the selected month
+        const startDate = `${month}/01/${year}`;
+        const endDate = `${month}/${new Date(year, month, 0).getDate()}/${year}`;
+        
+        // Build parameters for API filtering
+        const parameters = [
+            {
+                field: "date",
+                operator: ">=",
+                value: startDate
+            },
+            {
+                field: "date",
+                operator: "<=",
+                value: endDate
+            }
+        ];
+        
+        // Convert parameters to URL format
+        const paramsString = parameters.map((param, index) => 
+            `parameters[${index}][field]=${encodeURIComponent(param.field)}&` +
+            `parameters[${index}][operator]=${encodeURIComponent(param.operator)}&` +
+            `parameters[${index}][value]=${encodeURIComponent(param.value)}`
+        ).join('&');
+        
+        // fetch filtered purchase orders
         const poResponse = await fetch(
-          `/api/purchase_orders?token=6002f37a06cc09759259a7c5eabff471`
+          `/api/purchase_orders?token=6002f37a06cc09759259a7c5eabff471&${paramsString}`
         );
         const poData = await poResponse.json();
         
-        // Filtra por la fecha seleccionada
-        const filteredOrders = filterOrdersByMonth(poData.response, year, month);
+        // Filter out excluded vendors (still need to do this client-side)
+        const filteredOrders = poData.response.filter(order => 
+          order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
+        );
         
         // Tomar los ID de los vendors del filtrado
         const vendorIds = [...new Set(filteredOrders.map(order => order.vendor_id))];
@@ -77,22 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
           // mensaje amigable
           resultsDiv.innerHTML += `<p class="error-warning">Nota: No se pudieron cargar los nombres de los proveedores</p>`;
         }
-      }
-  
-      function filterOrdersByMonth(orders, year, month) {
-        if (!orders || !orders.length) return [];
-        
-        // primero filtra por fecha
-        const dateFiltered = orders.filter(order => {
-          if (!order.date) return false;
-          const [orderMonth, orderDay, orderYear] = order.date.split('/');
-          return orderYear === year && orderMonth === month;
-        });
-        
-        // luego filtra a los vendors excluidos
-        return dateFiltered.filter(order => 
-          order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
-        );
       }
   
     function displayAsTable(orders) {
@@ -180,13 +191,41 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const year = yearSelect.value;
         const month = monthSelect.value.padStart(2, '0');
+        
+        // Create date range for the selected month
+        const startDate = `${month}/01/${year}`;
+        const endDate = `${month}/${new Date(year, month, 0).getDate()}/${year}`;
+        
+        // Build parameters for API filtering
+        const parameters = [
+            {
+                field: "date",
+                operator: ">=",
+                value: startDate
+            },
+            {
+                field: "date",
+                operator: "<=",
+                value: endDate
+            }
+        ];
+        
+        // Convert parameters to URL format
+        const paramsString = parameters.map((param, index) => 
+            `parameters[${index}][field]=${encodeURIComponent(param.field)}&` +
+            `parameters[${index}][operator]=${encodeURIComponent(param.operator)}&` +
+            `parameters[${index}][value]=${encodeURIComponent(param.value)}`
+        ).join('&');
+        
         const response = await fetch(
-          `/api/purchase_orders?token=6002f37a06cc09759259a7c5eabff471`
+          `/api/purchase_orders?token=6002f37a06cc09759259a7c5eabff471&${paramsString}`
         );
         const data = await response.json();
         
-        // Filtra POs, por el fecha seleccionada
-        const filteredOrders = filterOrdersByMonth(data.response, year, month);
+        // Filtra POs para excluir vendors no deseados
+        const filteredOrders = data.response.filter(order => 
+          order.vendor_id && !EXCLUDED_VENDOR_IDS.includes(order.vendor_id)
+        );
         
         // crea el archivo csv
         const headers = [
